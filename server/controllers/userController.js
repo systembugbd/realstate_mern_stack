@@ -71,7 +71,7 @@ export const bookVisit = asyncHandler(async (req, res) => {
 /**
  * Get all booking data for a user
  */
-export const getAllbookedResidencyByUser = asyncHandler(async (req, res) => {
+export const getAllBookingResidency = asyncHandler(async (req, res) => {
     const { email } = req.body;
     try {
         //find unique data using email and select one specific fields bookedVisits
@@ -80,9 +80,44 @@ export const getAllbookedResidencyByUser = asyncHandler(async (req, res) => {
             select: { bookedVisits: true },
         });
         //Send response
-        res.status(200).send(bookedResidency)
-
+        res.status(200).send(bookedResidency);
     } catch (error) {
         res.status(404).json({ message: error.message });
+    }
+});
+
+/**
+ * Cancelled Booking by residency id Post Requrest
+ */
+export const cancellResidencyById = asyncHandler(async (req, res) => {
+    const { email, date } = req.body;
+    const { id } = req.params; //residency id
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: { bookedVisits: true },
+        });
+
+        const index = user.bookedVisits.some((visit) => visit.id === id);
+
+        if (index === -1) {
+            res.status(404).json({ message: "Booking not found" });
+        } else {
+            const cancelled = user.bookedVisits.splice(index, 1);
+
+            await prisma.user.update({
+                where: { email },
+                data: {
+                    bookedVisits: user.bookedVisits,
+                },
+            });
+            res.status(200).send({
+                message: "Booking cancelled successfully",
+                cancelled,
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
