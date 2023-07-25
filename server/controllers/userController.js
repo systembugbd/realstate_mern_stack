@@ -8,25 +8,29 @@ export const createUser = asyncHandler(async (req, res) => {
     //extract email from body
     const { email } = req.body;
 
-    //Check user exists or not
-    const isUserExists = await prisma.user.findUnique({ where: { email } });
+  try {
+      //Check user exists or not
+      const isUserExists = await prisma.user.findUnique({ where: { email } });
 
-    //if not exists create a user
-    if (!isUserExists) {
-        //Creating a user collection and keep data to User variable
-        const User = await prisma.user.create({ data: req.body });
-
-        //send success message to the client with user data
-        res.send({
-            message: "User successfully created",
-            User,
-        });
-    } else {
-        //if user already exists send user already exists message
-        res.status(201).send({
-            message: "User already exists, Please try with another email",
-        });
-    }
+      //if not exists create a user
+      if (!isUserExists) {
+          //Creating a user collection and keep data to User variable
+          const User = await prisma.user.create({ data: req.body });
+  
+          //send success message to the client with user data
+          res.send({
+              message: "User successfully created",
+              User,
+          });
+      } else {
+          //if user already exists send user already exists message
+          res.status(201).send({
+              message: "User already exists, Please try with another email",
+          });
+      }
+  } catch (error) {
+    res.status(500).json({message:error.message})
+  }
 });
 
 /**
